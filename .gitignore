@@ -68,9 +68,7 @@ pnpm-debug.log*
 dist/
 build/
 *.tsbuildinfo
-package-lock.json
-# Descomentar si el módulo versiona lockfile:
-# !package-lock.json
+# package-lock.json se versiona para reproducibilidad de SnarkJS
 
 # IDE y editores
 .idea/

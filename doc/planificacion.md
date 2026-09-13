@@ -1,6 +1,6 @@
 # Planificación — Módulo 17: ZK-SNARKs & Privacy Protocols
 
-**Estado:** Fases **0–7** ⏳ pendientes.  
+**Estado:** Fase **0** ✅. Fases **1–7** ⏳ pendientes.  
 **Regla de avance:** cada fase requiere **autorización explícita** del responsable antes de empezar (*“autorizo Fase N”* o equivalente).
 
 ---
@@ -170,7 +170,7 @@ Obligatorios del módulo: `NullifierAlreadySpent()`, validación de root histór
 
 | Fase | Nombre | Estado | Autorización |
 |------|--------|--------|--------------|
-| 0 | Setup Foundry + Node/Circom + estructura | ⏳ Pendiente | ⏳ Esperando |
+| 0 | Setup Foundry + Node/Circom + estructura | ✅ Completada | ✅ Autorizada |
 | 1 | Errors + Hasher + MerkleTreeWithHistory | ⏳ Pendiente | ⏳ Esperando |
 | 2 | Circuito Circom `withdraw` + compile/prove scripts | ⏳ Pendiente | ⏳ Esperando |
 | 3 | `Groth16Verifier` + `IVerifier` + fixtures | ⏳ Pendiente | ⏳ Esperando |
@@ -183,7 +183,7 @@ Obligatorios del módulo: `NullifierAlreadySpent()`, validación de root histór
 
 ## 7. Detalle por fase
 
-### Fase 0 — Setup Foundry + toolchain ZK
+### Fase 0 — Setup Foundry + toolchain ZK ✅
 
 **Objetivo:** repo compilable + toolchain Circom/SnarkJS documentada.
 
@@ -193,6 +193,16 @@ Obligatorios del módulo: `NullifierAlreadySpent()`, validación de root histór
 4. `package.json` con `snarkjs` / utilidades; `.env.example`; stub + smoke test; `README.md`.
 
 **Criterio de salida:** `forge build` y `forge test` en verde; README con prereqs Circom.
+
+**Hecho (2026-09-13):**
+- `foundry.toml` (solc `0.8.24`, Cancun, optimizer `10_000`, `via_ir`, fuzz `runs = 1000`, RPC `mainnet` / `sepolia`, `fs_permissions` a fixtures).
+- `remappings.txt`: `forge-std/`, `@openzeppelin/contracts/`.
+- Dependencias en `lib/` (gitignored): `forge-std` **v1.16.2**, OpenZeppelin **v5.2.0** (copiadas del módulo 16).
+- Carpetas `src/{verifiers,interfaces,libraries,errors,mocks}`, `test/{helpers,fuzz,gas,fixtures}`, `circuits/`, `scripts/`, `script/`.
+- Stub `src/Placeholder.sol` + `test/Placeholder.t.sol` (ping + remapping IERC20 + fuzz).
+- Stub `script/Deploy.s.sol` (Fase 7), stubs Node `scripts/{compile-circuit,generate-proof,export-verifier}.mjs`.
+- `package.json` + `npm install` (`snarkjs`, `circomlib`); `.env.example`; `README.md` con prereqs Circom.
+- `forge build` OK; `forge test` → **3 PASS** (fuzz 1000).
 
 ---
 
@@ -331,10 +341,10 @@ Pool de **monto fijo** (p. ej. `0.1 ether`) para maximizar el anonymity set educ
 - [ ] Circom/SnarkJS documentados; secretos/ptau/zkey no versionados.
 - [ ] Documentación (`doc/`) alineada al código final.
 
-> **No iniciar Fase 0** hasta autorización explícita.
+> **Fase 0 cerrada.** No iniciar Fase 1 hasta autorización explícita.
 
 ---
 
 ## 10. Próximo paso
 
-Responder con **“autorizo Fase 0”** (o la fase deseada) para comenzar el setup Foundry + toolchain ZK.
+Responder con **“autorizo Fase 1”** para Errors + Hasher + MerkleTreeWithHistory.
