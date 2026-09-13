@@ -1,6 +1,6 @@
 # Planificación — Módulo 17: ZK-SNARKs & Privacy Protocols
 
-**Estado:** Fase **0** ✅. Fases **1–7** ⏳ pendientes.  
+**Estado:** Fases **0–1** ✅. Fases **2–7** ⏳ pendientes.  
 **Regla de avance:** cada fase requiere **autorización explícita** del responsable antes de empezar (*“autorizo Fase N”* o equivalente).
 
 ---
@@ -171,7 +171,7 @@ Obligatorios del módulo: `NullifierAlreadySpent()`, validación de root histór
 | Fase | Nombre | Estado | Autorización |
 |------|--------|--------|--------------|
 | 0 | Setup Foundry + Node/Circom + estructura | ✅ Completada | ✅ Autorizada |
-| 1 | Errors + Hasher + MerkleTreeWithHistory | ⏳ Pendiente | ⏳ Esperando |
+| 1 | Errors + Hasher + MerkleTreeWithHistory | ✅ Completada | ✅ Autorizada |
 | 2 | Circuito Circom `withdraw` + compile/prove scripts | ⏳ Pendiente | ⏳ Esperando |
 | 3 | `Groth16Verifier` + `IVerifier` + fixtures | ⏳ Pendiente | ⏳ Esperando |
 | 4 | `PrivacyPool.deposit` + raíces históricas | ⏳ Pendiente | ⏳ Esperando |
@@ -206,7 +206,7 @@ Obligatorios del módulo: `NullifierAlreadySpent()`, validación de root histór
 
 ---
 
-### Fase 1 — Errors + Hasher + Merkle tree
+### Fase 1 — Errors + Hasher + Merkle tree ✅
 
 **Objetivo:** commitment tree on-chain con historial de roots.
 
@@ -216,6 +216,18 @@ Obligatorios del módulo: `NullifierAlreadySpent()`, validación de root histór
 4. `PrivacyErrors.sol` con errores del §5.
 
 **Criterio de salida:** tests Merkle + fuzz de inserts en verde.
+
+**Hecho (2026-09-13):**
+- `src/errors/PrivacyErrors.sol` — 10 custom errors (incl. `NullifierAlreadySpent`).
+- `src/interfaces/IHasher.sol` — `hashLeftRight` + `hashPreimage`.
+- `src/libraries/PoseidonT3.sol` — Poseidon 2-inputs (poseidon-solidity MIT, pragma `0.8.24`).
+- `src/PoseidonHasher.sol` — wrapper IHasher para circuito Circom.
+- `src/mocks/MockHasher.sol` — keccak para tests rapidos del arbol.
+- `src/libraries/MerkleTreeWithHistory.sol` — insert, `isKnownRoot`, `ROOT_HISTORY_SIZE=30`, `TreeFull` / `InvalidCommitment`.
+- Tests: `PrivacyErrors.t.sol`, `MerkleTree.t.sol` (historial, full, zero, fuzz 1000, Poseidon e2e levels=3).
+- Stub `Placeholder` eliminado.
+- `foundry.toml`: `via_ir = false` (PoseidonT3 + via_ir no compila en tiempo practico).
+- **`forge test` → 13 PASS**.
 
 ---
 
@@ -341,10 +353,10 @@ Pool de **monto fijo** (p. ej. `0.1 ether`) para maximizar el anonymity set educ
 - [ ] Circom/SnarkJS documentados; secretos/ptau/zkey no versionados.
 - [ ] Documentación (`doc/`) alineada al código final.
 
-> **Fase 0 cerrada.** No iniciar Fase 1 hasta autorización explícita.
+> **Fases 0–1 cerradas.** No iniciar Fase 2 hasta autorización explícita.
 
 ---
 
 ## 10. Próximo paso
 
-Responder con **“autorizo Fase 1”** para Errors + Hasher + MerkleTreeWithHistory.
+Responder con **“autorizo Fase 2”** para el circuito Circom `withdraw` + scripts compile/prove.

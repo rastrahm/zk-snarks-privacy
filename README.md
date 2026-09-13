@@ -2,7 +2,7 @@
 
 Privacy pool educativo (commitment Merkle + nullifiers + retiros Groth16) con relayer fee split. Solidity `0.8.24` + Foundry + Circom/SnarkJS.
 
-**Estado:** Fase **0** ✅ setup. Fases **1–7** pendientes (requieren autorización).
+**Estado:** Fases **0–1** ✅. Fases **2–7** pendientes (requieren autorización).
 
 ## Docs
 

@@ -6,7 +6,8 @@ solc = "0.8.24"
 evm_version = "cancun"
 optimizer = true
 optimizer_runs = 10_000
-via_ir = true
+# via_ir desactivado: PoseidonT3 (assembly) + via_ir hace la compilacion impractica.
+via_ir = false
 fs_permissions = [
     { access = "read", path = "./src" },
     { access = "read", path = "./test/fixtures" },
