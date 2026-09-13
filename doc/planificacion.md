@@ -1,7 +1,7 @@
 # Planificación — Módulo 17: ZK-SNARKs & Privacy Protocols
 
-**Estado:** Fases **0–6** ✅. Fase **7** ⏳ pendiente.  
-**Regla de avance:** cada fase requiere **autorización explícita** del responsable antes de empezar (*“autorizo Fase N”* o equivalente).
+**Estado:** Fases **0–7** ✅ (módulo v1 cerrado).  
+**Nota:** La regla de autorización por fase aplicó durante la construcción; v1 ya no tiene fases pendientes.
 
 ---
 
@@ -25,13 +25,13 @@ Stack: **Foundry + Solidity `0.8.24`** + **Circom + SnarkJS**. Frontend Next.js 
 | Incluido (v1) | Excluido (v1) |
 |---------------|---------------|
 | `PrivacyPool` — deposit / withdraw / roots / nullifiers | Multi-asset ERC-20 pools |
-| Merkle tree Poseidon (depth fijo, p. ej. 20) + `isKnownRoot` | Árboles dinámicos / Sparse Merkle Tree producción |
-| Circuito Circom: membership + nullifier + recipient binding | Circuitos Plonk / Halo2 (solo mención; verifier Groth16) |
-| `Groth16Verifier` generado + wrapper seguro | Trusted setup propia en mainnet (usar ptau público de lab) |
-| Relayer fee split en `withdraw` | Relayer off-chain de producción / mempool privado |
-| Hasher on-chain Poseidon (o MiMC si gas lo exige) | Anonymity set analytics / UI |
-| Tests Foundry: proof válida, nullifier replay, root inválida, fee split | Frontend Next.js (App Router) |
-| Scripts: compile circuit, gen proof fixtures, Deploy | Compliance / sanctions screening |
+| Merkle Poseidon **depth 4 (lab)** + `isKnownRoot` (función + ring buffer) | Depth 20 producción / Sparse Merkle Tree |
+| Circuito Circom `Withdraw(4)` + binding recipient/relayer/fee | Circuitos Plonk / Halo2 |
+| `Groth16Verifier` + `VerifierGate` / `InvalidZKProof` | Trusted setup mainnet (ptau lab local) |
+| Relayer fee split en `withdraw` | Relayer off-chain de producción |
+| `PoseidonHasher` on-chain (`PoseidonT3`) | MiMC (no usado en v1) |
+| Tests: proof, nullifier, root, fee, gas | Frontend Next.js (App Router) |
+| Scripts Circom/SnarkJS + `Deploy.s.sol` | Compliance / sanctions screening |
 
 ---
 
@@ -40,86 +40,96 @@ Stack: **Foundry + Solidity `0.8.24`** + **Circom + SnarkJS**. Frontend Next.js 
 ### Suite (`evm-smart-contracts-suite` + `solidity.cursorrules`)
 
 - Solidity **exacto** `0.8.24` (sin floating pragma).
-- OpenZeppelin Contracts v5.x (`ReentrancyGuard`, `Ownable2Step` si hay admin).
-- Foundry: unit + fuzz (`runs >= 1000`) + gas reports.
-- **Custom errors** (no `require` con strings salvo el check documentado del verifier si el generador SnarkJS lo impone; envolver en wrapper con custom error cuando sea posible).
-- CEI estricto; ETH vía `.call{value: ...}("")` (nunca `transfer`/`send`).
-- NatSpec en toda API pública/externa.
+- OpenZeppelin Contracts v5.x en `lib/` (deps de suite); el pool v1 usa **`TransientReentrancyGuard`** propio (Cancun), no el guard OZ.
+- Foundry: unit + fuzz (`runs >= 1000`) + gas reports / snapshot.
+- **Custom errors** (`PrivacyErrors`); wrapper `InvalidZKProof` (no `require` strings en pool).
+- CEI estricto; ETH vía **Yul `call`** sin returndata (nunca `transfer`/`send`).
+- NatSpec en API pública/externa.
 - Layout: Interfaces → Libraries → Contracts → State → Events → Errors → Modifiers → Functions.
-- TDD: tests primero en fases de contratos; cobertura de ramas de lógica explícita.
 
 ### Módulo 17 (`.cursorrules` local)
 
-- Primitivas: **Poseidon** (preferido) / MiMC para leaves y nodos del Merkle tree.
+- Primitivas: **Poseidon** (`PoseidonT3` / circomlib).
 - Verificación: Groth16 sobre **Alt_BN128** (`ecPairing` `0x08`).
 - `mapping(bytes32 => bool) public nullifierHashes` + `NullifierAlreadySpent()`.
-- `mapping(bytes32 => bool) public isKnownRoot` (raíces históricas; no solo `currentRoot`).
-- Withdraw gasless: payout atómico `recipient` + `relayer` fee desde el proof payload / args públicos.
-- `require(verifier.verifyProof(...), "Invalid ZK Proof")` o equivalente con custom error `InvalidZKProof()` en wrapper.
+- Raíces históricas: `roots[ROOT_HISTORY_SIZE]` + `isKnownRoot(root)` (no mapping booleano).
+- Withdraw gasless: payout atómico `recipient` + `relayer` fee ligados al proof.
+- Verifier: `IVerifier.verifyProof` → `InvalidZKProof()` si falla.
+
+### Circom / SnarkJS (v1)
+
+- `circuits/withdraw.circom` → `Withdraw(4)`; build en `circuits/build/` (gitignored).
+- Fixtures: `test/fixtures/withdraw/` (versionables).
+- Ptau lab local power-12 (`pot12_final_lab.ptau`); **no** versionar `.ptau` / `.zkey`.
 
 ### Next.js (`nextjs.cursorrules`) — post-v1
 
-- Si se añade UI deposit/withdraw: App Router, Zod, Vitest + RTL, JSDoc, sin `any`, sin prop drilling.
-- No forma parte de las fases 0–7.
-
-### Circom / SnarkJS
-
-- Circuito versionado en `circuits/`; artefactos de build en `.gitignore`.
-- Fixtures de proof para Foundry en `test/fixtures/` (permitidos en git).
-- **No** versionar `.zkey` de producción ni `*.ptau` (toxic waste / ceremonia).
+- UI deposit/withdraw: App Router, Zod, Vitest + RTL, JSDoc, sin `any`.
+- Fuera de fases 0–7.
 
 ---
 
-## 4. Arquitectura propuesta (v1)
+## 4. Arquitectura (v1 implementado)
 
 ```
 17-zk-snarks-privacy/
 ├── README.md
 ├── doc/
+│   ├── README.md
 │   ├── planificacion.md
 │   ├── diagrama-de-clases.md
 │   ├── diagrama-de-flujo.md
-│   └── flujograma.md
+│   ├── flujograma.md
+│   ├── SWC-AUDIT.md
+│   └── GAS.md
 ├── circuits/
-│   ├── withdraw.circom          # membership + nullifier + public signals
-│   └── (build/ gitignored)
-├── scripts/                     # Node: compile, prove, export verifier
+│   ├── README.md
+│   ├── withdraw.circom          # Withdraw(4)
+│   ├── merkleTree.circom        # DualMux + Poseidon
+│   └── build/                   # gitignored
+├── scripts/
 │   ├── compile-circuit.mjs
 │   ├── generate-proof.mjs
 │   └── export-verifier.mjs
 ├── src/
-│   ├── PrivacyPool.sol          # deposit + withdraw + roots + nullifiers
+│   ├── PrivacyPool.sol
+│   ├── PoseidonHasher.sol
 │   ├── verifiers/
-│   │   └── Groth16Verifier.sol  # generado / adaptado
+│   │   ├── Groth16Verifier.sol  # snarkJS GPL-3.0, pragma 0.8.24
+│   │   └── VerifierGate.sol
 │   ├── interfaces/
 │   │   ├── IPrivacyPool.sol
 │   │   ├── IHasher.sol
 │   │   └── IVerifier.sol
 │   ├── libraries/
-│   │   ├── PoseidonT3.sol       # o wrapper MiMC
+│   │   ├── PoseidonT3.sol
 │   │   ├── MerkleTreeWithHistory.sol
-│   │   └── ProofLib.sol         # decode / pack public inputs
+│   │   └── TransientReentrancyGuard.sol
 │   ├── errors/
 │   │   └── PrivacyErrors.sol
 │   └── mocks/
 │       ├── MockVerifier.sol
-│       └── MockHasher.sol
+│       ├── MockHasher.sol
+│       └── RejectETH.sol
 ├── test/
-│   ├── helpers/PrivacyTestBase.sol
+│   ├── helpers/{MerkleTreeHarness,ProofFixture}.sol
 │   ├── MerkleTree.t.sol
 │   ├── PrivacyPool.t.sol
+│   ├── PrivacyPoolWithdraw.t.sol
 │   ├── NullifierReplay.t.sol
 │   ├── InvalidRoot.t.sol
-│   ├── RelayerFee.t.sol
+│   ├── PoolProofVerification.t.sol
 │   ├── ProofVerification.t.sol
-│   ├── fuzz/
-│   └── gas/
+│   ├── RelayerFee.t.sol
+│   ├── PrivacyErrors.t.sol
+│   ├── gas/PrivacyPool.gas.t.sol
+│   └── fixtures/withdraw/
 ├── script/
 │   └── Deploy.s.sol
-├── test/fixtures/               # proofs / public inputs de lab
 ├── foundry.toml
 ├── remappings.txt
-├── package.json                 # snarkjs, circomlib (scripts)
+├── package.json
+├── .gas-snapshot
 ├── .env.example
 └── .gitignore
 ```
@@ -128,13 +138,14 @@ Stack: **Foundry + Solidity `0.8.24`** + **Circom + SnarkJS**. Frontend Next.js 
 
 | Artefacto | Responsabilidad |
 |-----------|-----------------|
-| `PrivacyPool` | Deposit ETH + commitment; withdraw con proof; CEI + reentrancy |
-| `MerkleTreeWithHistory` | Insert leaf; `currentRoot`; `isKnownRoot`; profundidad fija |
-| `IHasher` / Poseidon | Hash de 2 inputs para nodos y commitments |
-| `IVerifier` / `Groth16Verifier` | `verifyProof(a,b,c, publicInputs)` |
-| `ProofLib` | Empaquetar señales públicas (root, nullifierHash, recipient, relayer, fee) |
-| `MockVerifier` | Tests unitarios sin pairing real |
-| `PrivacyErrors` | Custom errors del módulo |
+| `PrivacyPool` | Deposit / withdraw; nullifiers; CEI + transient reentrancy; ETH Yul |
+| `MerkleTreeWithHistory` | Insert; arrays fijos; indices packed; `isKnownRoot` / ring 30 |
+| `PoseidonHasher` / `PoseidonT3` | Hash 2-inputs alineado a circomlib |
+| `IVerifier` / `Groth16Verifier` | Pairing Groth16 (5 públicos) |
+| `VerifierGate` | `requireValidProof` → `InvalidZKProof` |
+| `TransientReentrancyGuard` | Lock EIP-1153 (Cancun) |
+| `MockVerifier` / `MockHasher` / `RejectETH` | Tests |
+| `PrivacyErrors` | 10 custom errors |
 
 ---
 
@@ -147,13 +158,22 @@ error UnknownRoot();             // raíz no histórica
 error InvalidCommitment();       // zero / ya insertado si aplica
 error TreeFull();                // capacidad Merkle agotada
 error FeeExceedsDenomination();  // relayer fee > monto fijo del pool
-error EthTransferFailed();       // .call ETH fallido
+error EthTransferFailed();       // Yul call ETH fallido
 error ZeroAddress();
 error InvalidDenomination();     // msg.value != denomination
-error Unauthorized();            // admin si aplica
+error Unauthorized();            // reservado (admin futuro)
 ```
 
 Obligatorios del módulo: `NullifierAlreadySpent()`, validación de root histórica, verificación ZK, payout relayer atómico.
+
+### Denomination y profundidad (v1 lab)
+
+| Parámetro | Valor v1 |
+|-----------|----------|
+| `denomination` | `0.1 ether` (configurable en deploy) |
+| Merkle / circuito | **levels = 4** (16 hojas) |
+| `ROOT_HISTORY_SIZE` | 30 |
+| Públicos proof | `root, nullifierHash, recipient, relayer, fee` |
 
 ---
 
@@ -177,7 +197,7 @@ Obligatorios del módulo: `NullifierAlreadySpent()`, validación de root histór
 | 4 | `PrivacyPool.deposit` + raíces históricas | ✅ Completada | ✅ Autorizada |
 | 5 | `PrivacyPool.withdraw` + nullifier + relayer split | ✅ Completada | ✅ Autorizada |
 | 6 | Suite seguridad: replay / root / proof / fee | ✅ Completada | ✅ Autorizada |
-| 7 | Gas + Deploy + NatSpec / cierre v1 | ⏳ Pendiente | ⏳ Esperando |
+| 7 | Gas + Deploy + NatSpec / cierre v1 | ✅ Completada | ✅ Autorizada |
 
 ---
 
@@ -333,7 +353,7 @@ Obligatorios del módulo: `NullifierAlreadySpent()`, validación de root histór
 
 ---
 
-### Fase 7 — Gas + Deploy + hardening
+### Fase 7 — Gas + Deploy + hardening ✅
 
 **Objetivo:** profiling y cierre v1.
 
@@ -343,6 +363,13 @@ Obligatorios del módulo: `NullifierAlreadySpent()`, validación de root histór
 4. Opcional: actualizar `doc/SWC-AUDIT.md` si el código cambia.
 
 **Criterio de salida:** suite completa en verde; módulo v1 listo para cierre.
+
+**Hecho (2026-09-13):**
+- Gas opts: transient reentrancy, arrays fijos Merkle, indices packed, Yul ETH call, bit ops, caches.
+- `test/gas/PrivacyPool.gas.t.sol` + `.gas-snapshot` + `doc/GAS.md`.
+- `script/Deploy.s.sol` — PoseidonHasher + Groth16Verifier + PrivacyPool.
+- SWC-AUDIT actualizado (transient guard).
+- **`forge test` → 65 PASS**.
 
 ---
 
@@ -361,42 +388,44 @@ El leaf del Merkle tree es el `commitment`. El proof demuestra:
 2. `nullifierHash` correcto.
 3. Binding a `recipient`, `relayer`, `fee` (anti-front-running / malleability del payout).
 
-### Señales públicas (propuesta)
+### Señales públicas (v1 — orden fijo)
 
 ```text
 publicInputs = [
   root,
   nullifierHash,
-  recipient,      // como field element / packed
+  recipient,      // address → uint160 → field
   relayer,
   fee
 ]
 ```
 
-Alinear exactamente circuito ↔ `PrivacyPool.withdraw` en Fase 2–5.
+Alineado exactamente: `withdraw.circom` ↔ `PrivacyPool.withdraw` ↔ fixtures.
 
 ### Denomination
 
-Pool de **monto fijo** (p. ej. `0.1 ether`) para maximizar el anonymity set educativo (como Tornado denominaciones).
+Pool de **monto fijo** (`0.1 ether` por defecto en lab/deploy). Depth Merkle/circuito v1 = **4**.
 
 ---
 
 ## 9. Criterios de aceptación globales (v1)
 
-- [ ] Pragma fijo `0.8.24` en todos los contratos.
-- [ ] `nullifierHashes` + `NullifierAlreadySpent`.
-- [ ] `isKnownRoot` permite withdraw tras nuevos deposits.
-- [ ] Verificación Groth16 on-chain (o mock en unit + real en integration).
-- [ ] Relayer fee split atómico en withdraw.
-- [ ] Tests: proof OK, replay, root inválida, proof tampered, fee split.
-- [ ] NatSpec + custom errors + CEI / ReentrancyGuard.
-- [ ] Circom/SnarkJS documentados; secretos/ptau/zkey no versionados.
-- [ ] Documentación (`doc/`) alineada al código final.
+- [x] Pragma fijo `0.8.24` en todos los contratos.
+- [x] `nullifierHashes` + `NullifierAlreadySpent`.
+- [x] `isKnownRoot` permite withdraw tras nuevos deposits.
+- [x] Verificación Groth16 on-chain (o mock en unit + real en integration).
+- [x] Relayer fee split atómico en withdraw.
+- [x] Tests: proof OK, replay, root inválida, proof tampered, fee split.
+- [x] NatSpec + custom errors + CEI / reentrancy (transient Cancun).
+- [x] Circom/SnarkJS documentados; secretos/ptau/zkey no versionados.
+- [x] Documentación (`doc/`) alineada al código final + GAS + SWC.
 
-> **Fases 0–6 cerradas.** No iniciar Fase 7 hasta autorización explícita.
+> **Módulo v1 cerrado.** Extensiones futuras: depth 20, Plonk, multi-asset, frontend Next.js.
 
 ---
 
-## 10. Próximo paso
+## 10. Estado post-v1
 
-Responder con **“autorizo Fase 7”** para gas + Deploy + hardening / cierre v1.
+El módulo **v1 está cerrado** (fases 0–7). Extensiones requieren nueva autorización de alcance.
+
+Suite de referencia: `forge test` → **65 PASS**.

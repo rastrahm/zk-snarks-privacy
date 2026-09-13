@@ -6,9 +6,8 @@ import {PrivacyErrors} from "../errors/PrivacyErrors.sol";
 
 /**
  * @title MerkleTreeWithHistory
- * @notice Arbol Merkle incremental con historial de raices (estilo Tornado Cash).
- * @dev Contrato abstracto con storage; el pool hereda e invoca `_insert`.
- *      `isKnownRoot` permite withdraws validos tras nuevos deposits.
+ * @notice Arbol Merkle incremental con historial de raices (gas-opt).
+ * @dev Arrays fijos (no mappings), indices packed, bit ops, hasher cacheado.
  */
 abstract contract MerkleTreeWithHistory {
     /// @notice Tamano del ring buffer de raices historicas.
@@ -20,20 +19,17 @@ abstract contract MerkleTreeWithHistory {
     /// @notice Hasher Poseidon / mock inyectado.
     IHasher public immutable hasher;
 
-    /// @notice Subarboles llenos por nivel (camino de insercion).
-    mapping(uint256 => bytes32) public filledSubtrees;
+    /// @notice Subarboles llenos por nivel (max 32).
+    bytes32[32] public filledSubtrees;
 
     /// @notice Ceros precomputados por nivel.
-    mapping(uint256 => bytes32) public zeros;
+    bytes32[32] public zeros;
 
     /// @notice Ring buffer de raices.
-    mapping(uint256 => bytes32) public roots;
+    bytes32[ROOT_HISTORY_SIZE] public roots;
 
-    /// @notice Indice actual en el ring de raices.
-    uint32 public currentRootIndex;
-
-    /// @notice Proximo indice de hoja libre.
-    uint32 public nextIndex;
+    /// @dev Packed: [currentRootIndex : uint32][nextIndex : uint32] en un slot.
+    uint256 private _packedIndices;
 
     /**
      * @notice Inicializa ceros, subarboles y raiz vacia.
@@ -47,22 +43,40 @@ abstract contract MerkleTreeWithHistory {
         levels = levels_;
         hasher = hasher_;
 
-        bytes32 currentZero = bytes32(0);
-        for (uint32 i = 0; i < levels_; ++i) {
+        IHasher h = hasher_;
+        bytes32 currentZero;
+        // currentZero = 0
+        for (uint32 i; i < levels_;) {
             zeros[i] = currentZero;
             filledSubtrees[i] = currentZero;
-            currentZero = hasher_.hashLeftRight(currentZero, currentZero);
+            currentZero = h.hashLeftRight(currentZero, currentZero);
+            unchecked {
+                ++i;
+            }
         }
 
         roots[0] = currentZero;
     }
 
     /**
+     * @notice Indice de la proxima hoja libre.
+     */
+    function nextIndex() public view returns (uint32) {
+        return uint32(_packedIndices);
+    }
+
+    /**
+     * @notice Indice actual en el ring de raices.
+     */
+    function currentRootIndex() public view returns (uint32) {
+        return uint32(_packedIndices >> 32);
+    }
+
+    /**
      * @notice Ultima raiz conocida (current).
-     * @return Raiz en `currentRootIndex`.
      */
     function getLastRoot() public view returns (bytes32) {
-        return roots[currentRootIndex];
+        return roots[uint32(_packedIndices >> 32)];
     }
 
     /**
@@ -70,24 +84,17 @@ abstract contract MerkleTreeWithHistory {
      * @param root Raiz a validar.
      */
     function isKnownRoot(bytes32 root) public view virtual returns (bool) {
-        if (root == bytes32(0)) {
-            return false;
-        }
+        if (root == bytes32(0)) return false;
 
-        uint32 current = currentRootIndex;
+        uint32 current = uint32(_packedIndices >> 32);
         uint32 i = current;
-        do {
-            if (root == roots[i]) {
-                return true;
-            }
-            if (i == 0) {
-                i = ROOT_HISTORY_SIZE;
-            }
-            unchecked {
+        unchecked {
+            do {
+                if (root == roots[i]) return true;
+                if (i == 0) i = ROOT_HISTORY_SIZE;
                 --i;
-            }
-        } while (i != current);
-
+            } while (i != current);
+        }
         return false;
     }
 
@@ -99,32 +106,39 @@ abstract contract MerkleTreeWithHistory {
     function _insert(bytes32 leaf) internal returns (uint32 index) {
         if (leaf == bytes32(0)) revert PrivacyErrors.InvalidCommitment();
 
-        uint32 _nextIndex = nextIndex;
-        uint32 maxIndex = uint32(1) << levels;
+        uint256 packed = _packedIndices;
+        uint32 _nextIndex = uint32(packed);
+        uint32 _levels = levels;
+        uint32 maxIndex;
+        unchecked {
+            maxIndex = uint32(1) << _levels;
+        }
         if (_nextIndex >= maxIndex) revert PrivacyErrors.TreeFull();
 
         uint32 currentIndex = _nextIndex;
         bytes32 currentLevelHash = leaf;
-        bytes32 left;
-        bytes32 right;
+        IHasher h = hasher;
 
-        for (uint32 i = 0; i < levels; ++i) {
-            if (currentIndex % 2 == 0) {
-                left = currentLevelHash;
-                right = zeros[i];
+        for (uint32 i; i < _levels;) {
+            if ((currentIndex & 1) == 0) {
                 filledSubtrees[i] = currentLevelHash;
+                currentLevelHash = h.hashLeftRight(currentLevelHash, zeros[i]);
             } else {
-                left = filledSubtrees[i];
-                right = currentLevelHash;
+                currentLevelHash = h.hashLeftRight(filledSubtrees[i], currentLevelHash);
             }
-            currentLevelHash = hasher.hashLeftRight(left, right);
-            currentIndex /= 2;
+            unchecked {
+                currentIndex >>= 1;
+                ++i;
+            }
         }
 
-        uint32 newRootIndex = (currentRootIndex + 1) % ROOT_HISTORY_SIZE;
-        currentRootIndex = newRootIndex;
+        uint32 oldRootIndex = uint32(packed >> 32);
+        uint32 newRootIndex;
+        unchecked {
+            newRootIndex = (oldRootIndex + 1) % ROOT_HISTORY_SIZE;
+            _packedIndices = (uint256(newRootIndex) << 32) | uint256(_nextIndex + 1);
+        }
         roots[newRootIndex] = currentLevelHash;
-        nextIndex = _nextIndex + 1;
 
         return _nextIndex;
     }

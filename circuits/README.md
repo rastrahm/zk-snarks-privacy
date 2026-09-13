@@ -1,5 +1,7 @@
 # Circuitos Circom — Privacy Pool (modulo 17)
 
+**Estado v1:** `Withdraw(4)` compilado + fixtures Foundry. Docs: [`../doc/README.md`](../doc/README.md).
+
 ## withdraw.circom
 
 | Item | Valor |
@@ -7,6 +9,7 @@
 | Template | `Withdraw(4)` — depth lab = 4 (16 hojas) |
 | Hash | Poseidon (circomlib) |
 | Proof system | Groth16 / bn128 |
+| Constraints (aprox.) | ~1428 |
 
 ### Senales publicas (orden fijo)
 
@@ -38,7 +41,8 @@ Recipient / relayer / fee se enlazan al proof via restricciones cuadraticas (bin
 export PATH="$HOME/.cargo/bin:$PATH"
 
 npm run compile:circuit   # → circuits/build/
-npm run generate:proof    # ptau + zkey + proof + test/fixtures/withdraw/
+npm run generate:proof    # ptau lab + zkey + test/fixtures/withdraw/
+npm run export:verifier   # → src/verifiers/Groth16Verifier.sol
 ```
 
 ### Ptau (lab)
@@ -54,12 +58,13 @@ PTAU_PATH=/ruta/a/tu.ptau npm run generate:proof
 ### Cambiar profundidad
 
 1. Editar `component main ... = Withdraw(N);` en `withdraw.circom`
-2. `LEVELS=N npm run generate:proof`
-3. Alinear `MerkleTreeWithHistory` / pool al mismo `N`
+2. `LEVELS=N npm run generate:proof` y `npm run export:verifier`
+3. Deploy con `MERKLE_TREE_LEVELS=N`
 
 ## Artefactos
 
 | Ruta | Git |
 |------|-----|
 | `circuits/build/` | ignorado |
-| `test/fixtures/withdraw/` | versionable (fixtures Foundry) |
+| `test/fixtures/withdraw/` | versionable (Foundry) |
+| `src/verifiers/Groth16Verifier.sol` | versionable (export) |

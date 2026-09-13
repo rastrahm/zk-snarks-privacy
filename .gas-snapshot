@@ -1,0 +1,4 @@
+PrivacyPoolGasTest:testGas_deposit() (gas: 133255)
+PrivacyPoolGasTest:testGas_e2e_groth16_withdraw() (gas: 2149226)
+PrivacyPoolGasTest:testGas_withdraw_withRelayerFee() (gas: 258391)
+PrivacyPoolGasTest:testGas_withdraw_zeroFee() (gas: 221925)

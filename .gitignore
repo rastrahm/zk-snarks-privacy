@@ -46,6 +46,8 @@ circuits/**/*_js/
 lcov.info
 coverage/
 gas-report.txt
+# Snapshot Foundry (versionar .gas-snapshot)
+!.gas-snapshot
 gas-snapshot
 
 # Frontend (Next.js) — fuera de alcance v1
