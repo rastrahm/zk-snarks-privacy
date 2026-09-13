@@ -1,6 +1,6 @@
 # Planificación — Módulo 17: ZK-SNARKs & Privacy Protocols
 
-**Estado:** Fases **0–4** ✅. Fases **5–7** ⏳ pendientes.  
+**Estado:** Fases **0–5** ✅. Fases **6–7** ⏳ pendientes.  
 **Regla de avance:** cada fase requiere **autorización explícita** del responsable antes de empezar (*“autorizo Fase N”* o equivalente).
 
 ---
@@ -175,7 +175,7 @@ Obligatorios del módulo: `NullifierAlreadySpent()`, validación de root histór
 | 2 | Circuito Circom `withdraw` + compile/prove scripts | ✅ Completada | ✅ Autorizada |
 | 3 | `Groth16Verifier` + `IVerifier` + fixtures | ✅ Completada | ✅ Autorizada |
 | 4 | `PrivacyPool.deposit` + raíces históricas | ✅ Completada | ✅ Autorizada |
-| 5 | `PrivacyPool.withdraw` + nullifier + relayer split | ⏳ Pendiente | ⏳ Esperando |
+| 5 | `PrivacyPool.withdraw` + nullifier + relayer split | ✅ Completada | ✅ Autorizada |
 | 6 | Suite seguridad: replay / root / proof / fee | ⏳ Pendiente | ⏳ Esperando |
 | 7 | Gas + Deploy + NatSpec / cierre v1 | ⏳ Pendiente | ⏳ Esperando |
 
@@ -292,7 +292,7 @@ Obligatorios del módulo: `NullifierAlreadySpent()`, validación de root histór
 
 ---
 
-### Fase 5 — PrivacyPool.withdraw + relayer
+### Fase 5 — PrivacyPool.withdraw + relayer ✅
 
 **Objetivo:** retiro ZK con anti-double-spend y fee split.
 
@@ -301,6 +301,13 @@ Obligatorios del módulo: `NullifierAlreadySpent()`, validación de root histór
 3. Binding: señales públicas deben coincidir con args de `withdraw`.
 
 **Criterio de salida:** withdraw e2e con fixture real o mock verifier + split correcto.
+
+**Hecho (2026-09-13):**
+- `PrivacyPool.withdraw` — `UnknownRoot`, `NullifierAlreadySpent`, `InvalidZKProof`, fee/recipient checks.
+- CEI: `nullifierHashes[hash]=true` antes de `.call` ETH; split recipient/relayer.
+- Tests mock: fee split, zero fee, replay, root historica, RejectETH.
+- E2E: deposit commitment fixture + `Groth16Verifier` — root on-chain == circuito; withdraw + replay.
+- **`forge test` → 43 PASS**.
 
 ---
 
@@ -378,10 +385,10 @@ Pool de **monto fijo** (p. ej. `0.1 ether`) para maximizar el anonymity set educ
 - [ ] Circom/SnarkJS documentados; secretos/ptau/zkey no versionados.
 - [ ] Documentación (`doc/`) alineada al código final.
 
-> **Fases 0–4 cerradas.** No iniciar Fase 5 hasta autorización explícita.
+> **Fases 0–5 cerradas.** No iniciar Fase 6 hasta autorización explícita.
 
 ---
 
 ## 10. Próximo paso
 
-Responder con **“autorizo Fase 5”** para `PrivacyPool.withdraw` + nullifier + relayer fee split.
+Responder con **“autorizo Fase 6”** para la matriz de seguridad (replay / root / proof / fee dedicados).
