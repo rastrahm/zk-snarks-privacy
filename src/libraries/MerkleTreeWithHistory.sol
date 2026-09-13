@@ -69,7 +69,7 @@ abstract contract MerkleTreeWithHistory {
      * @notice True si `root` esta en el historial circular (y no es cero).
      * @param root Raiz a validar.
      */
-    function isKnownRoot(bytes32 root) public view returns (bool) {
+    function isKnownRoot(bytes32 root) public view virtual returns (bool) {
         if (root == bytes32(0)) {
             return false;
         }
