@@ -11,14 +11,14 @@ import {PrivacyErrors} from "./errors/PrivacyErrors.sol";
 
 /**
  * @title PrivacyPool
- * @notice Mixer educativo: deposit ETH + commitment Merkle (Poseidon). Withdraw en Fase 5.
- * @dev CEI + `ReentrancyGuard`. Denomination y verifier immutables.
+ * @notice Mixer educativo: deposit + withdraw Groth16 con nullifier y relayer fee.
+ * @dev CEI + `ReentrancyGuard`. Senales publicas: root, nullifierHash, recipient, relayer, fee.
  */
 contract PrivacyPool is IPrivacyPool, MerkleTreeWithHistory, ReentrancyGuard {
-    /// @notice Monto fijo por deposit (wei).
+    /// @notice Monto fijo por deposit/withdraw (wei).
     uint256 public immutable override denomination;
 
-    /// @notice Verifier Groth16 (usado en withdraw — Fase 5).
+    /// @notice Verifier Groth16 del circuito withdraw.
     IVerifier public immutable verifier;
 
     /// @notice Nullifiers gastados (anti double-spend).
@@ -64,5 +64,58 @@ contract PrivacyPool is IPrivacyPool, MerkleTreeWithHistory, ReentrancyGuard {
         commitments[commitment] = true;
 
         emit Deposit(commitment, leafIndex, block.timestamp);
+    }
+
+    /**
+     * @inheritdoc IPrivacyPool
+     * @dev Orden CEI: checks (root/nullifier/fee/proof) → effect (marcar nullifier) → interactions (ETH).
+     */
+    function withdraw(
+        uint256[2] calldata a,
+        uint256[2][2] calldata b,
+        uint256[2] calldata c,
+        bytes32 root,
+        bytes32 nullifierHash,
+        address payable recipient,
+        address payable relayer,
+        uint256 fee
+    ) external nonReentrant {
+        if (!isKnownRoot(root)) revert PrivacyErrors.UnknownRoot();
+        if (nullifierHashes[nullifierHash]) revert PrivacyErrors.NullifierAlreadySpent();
+        if (fee > denomination) revert PrivacyErrors.FeeExceedsDenomination();
+        if (recipient == address(0)) revert PrivacyErrors.ZeroAddress();
+        if (fee > 0 && relayer == address(0)) revert PrivacyErrors.ZeroAddress();
+
+        uint256[5] memory pubSignals = [
+            uint256(root),
+            uint256(nullifierHash),
+            uint256(uint160(address(recipient))),
+            uint256(uint160(address(relayer))),
+            fee
+        ];
+
+        if (!verifier.verifyProof(a, b, c, pubSignals)) {
+            revert PrivacyErrors.InvalidZKProof();
+        }
+
+        // Effects antes de transferencias ETH
+        nullifierHashes[nullifierHash] = true;
+
+        uint256 toRecipient = denomination - fee;
+        _sendEth(recipient, toRecipient);
+        if (fee > 0) {
+            _sendEth(relayer, fee);
+        }
+
+        emit Withdrawal(recipient, nullifierHash, relayer, fee);
+    }
+
+    /**
+     * @dev ETH via `.call` (nunca transfer/send).
+     */
+    function _sendEth(address payable to, uint256 amount) private {
+        if (amount == 0) return;
+        (bool ok,) = to.call{value: amount}("");
+        if (!ok) revert PrivacyErrors.EthTransferFailed();
     }
 }
