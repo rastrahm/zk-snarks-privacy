@@ -1,6 +1,7 @@
 # Diagrama de flujo — Deposit, prove y withdraw
 
-Flujos de decisión internos del pool, Merkle tree y verificación ZK (módulo 17, **planificación v1**).
+Flujos de decisión internos del pool, Merkle tree y verificación ZK (módulo 17, **v1 implementado**).  
+**Sync:** 2026-09-13.
 
 ## 1. deposit (commitment + Merkle)
 
@@ -10,18 +11,20 @@ flowchart TD
     B -->|No| Z0[Revert InvalidCommitment]
     B -->|Sí| C{¿msg.value == denomination?}
     C -->|No| Z1[Revert InvalidDenomination]
-    C -->|Sí| D{¿árbol con capacidad?}
-    D -->|No| Z2[Revert TreeFull]
-    D -->|Sí| E[Insert leaf en MerkleTreeWithHistory]
-    E --> F[Registrar currentRoot en isKnownRoot / roots]
-    F --> G[Emit Deposit index, commitment, root]
+    C -->|Sí| D{¿ya depositado?}
+    D -->|Sí| Z0
+    D -->|No| E{¿nextIndex < 2^levels?}
+    E -->|No| Z2[Revert TreeFull]
+    E -->|Sí| F[commitments = true]
+    F --> G[_insert leaf + roots ring]
+    G --> H[Emit Deposit]
     Z0 --> End([Fin — revert])
     Z1 --> End
     Z2 --> End
-    G --> Ok([Fin — OK])
+    H --> Ok([Fin — OK])
 ```
 
-> El `commitment = Poseidon(nullifier, secret)` se calcula **off-chain**; on-chain solo se inserta el leaf.
+> `commitment = Poseidon(nullifier, secret)` off-chain. Guard: **transient reentrancy**.
 
 ---
 
@@ -54,14 +57,14 @@ flowchart TD
     E -->|Sí| F[Pack publicInputs alineados al circuito]
     F --> G{¿verifier.verifyProof?}
     G -->|No| Z5[Revert InvalidZKProof]
-    G -->|Sí| H[nullifierHashes hash = true]
+    G -->|Sí| H[nullifierHashes = true]
     H --> I[amountToRecipient = denomination - fee]
-    I --> J[.call value amountToRecipient a recipient]
+    I --> J[Yul call ETH a recipient]
     J --> K{¿OK?}
     K -->|No| Z6[Revert EthTransferFailed]
-    K -->|Sí| L{¿fee > 0 y relayer != 0?}
-    L -->|No| M[Emit Withdraw]
-    L -->|Sí| N[.call value fee a relayer]
+    K -->|Sí| L{¿fee > 0?}
+    L -->|No| M[Emit Withdrawal]
+    L -->|Sí| N[Yul call ETH a relayer]
     N --> O{¿OK?}
     O -->|No| Z6
     O -->|Sí| M
@@ -74,7 +77,7 @@ flowchart TD
     M --> Ok([Fin — OK])
 ```
 
-> CEI: marcar `nullifierHashes` **antes** de las transferencias ETH.
+> CEI: marcar `nullifierHashes` **antes** de los `call` ETH (Yul, sin returndata). Transient reentrancy.
 
 ---
 
@@ -131,3 +134,11 @@ flowchart TD
     D --> Done([Payout atómico en misma tx])
     F --> Done
 ```
+
+---
+
+## Relación con otros docs
+
+- UML: [`diagrama-de-clases.md`](./diagrama-de-clases.md)
+- E2E: [`flujograma.md`](./flujograma.md)
+- Índice: [`README.md`](./README.md)

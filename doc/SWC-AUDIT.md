@@ -6,19 +6,19 @@ Verificación del Privacy Pool contra el [SWC Registry](https://swcregistry.io/)
 
 **Contratos auditados (prod / core):**  
 `src/PrivacyPool.sol`,  
-`src/libraries/MerkleTreeWithHistory.sol`,  
 `src/PoseidonHasher.sol`,  
+`src/libraries/{MerkleTreeWithHistory,TransientReentrancyGuard,PoseidonT3}.sol`,  
 `src/verifiers/{Groth16Verifier,VerifierGate}.sol`,  
 `src/interfaces/{IPrivacyPool,IHasher,IVerifier}.sol`,  
 `src/errors/PrivacyErrors.sol`
 
 **Dependencias de confianza (fuera de alcance de bugs propios):**  
-OpenZeppelin Contracts v5.2 (`ReentrancyGuard`), PoseidonT3 (`poseidon-solidity` MIT), Groth16Verifier (snarkJS GPL-3.0)
+forge-std, OpenZeppelin Contracts v5.2 (en `lib/`; pool no usa OZ ReentrancyGuard), PoseidonT3 (`poseidon-solidity` MIT), Groth16Verifier (snarkJS GPL-3.0)
 
 **Mocks (fuera de prod):** `MockHasher`, `MockVerifier`, `RejectETH`  
-**Fecha:** 2026-09-13  
-**Referencia tests:** `test/NullifierReplay.t.sol`, `test/InvalidRoot.t.sol`, `test/PoolProofVerification.t.sol`, `test/RelayerFee.t.sol`, `test/ProofVerification.t.sol`, `test/PrivacyPool*.t.sol`  
-**Índice:** [`planificacion.md`](./planificacion.md) · README: [`../README.md`](../README.md)
+**Fecha:** 2026-09-13 (post Fase 7 / sync docs)  
+**Referencia tests:** `test/NullifierReplay.t.sol`, `test/InvalidRoot.t.sol`, `test/PoolProofVerification.t.sol`, `test/RelayerFee.t.sol`, `test/ProofVerification.t.sol`, `test/PrivacyPool*.t.sol`, `test/gas/`  
+**Índice:** [`README.md`](./README.md) · README módulo: [`../README.md`](../README.md)
 
 ---
 
@@ -30,7 +30,7 @@ OpenZeppelin Contracts v5.2 (`ReentrancyGuard`), PoseidonT3 (`poseidon-solidity`
 | ⚠️ Informativo (diseño mixer / trust / ops) | 6 |
 | ❌ Vulnerable | 0 |
 
-**Conclusión:** Sin vulnerabilidades SWC explotables en el alcance v1. El pool usa **`ReentrancyGuard`**, **CEI** (nullifier antes de ETH), **`isKnownRoot`**, **`nullifierHashes`**, verificación **Groth16** con binding de recipient/relayer/fee, **custom errors** y pragma fijo **`0.8.24`**. Riesgos informativos: trusted setup de lab, anonymity set pequeño (depth 4), front-running de withdraw en mempool, dependencia de hasher/verifier correctos en deploy.
+**Conclusión:** Sin vulnerabilidades SWC explotables en el alcance v1. El pool usa **`TransientReentrancyGuard`**, **CEI** (nullifier antes de ETH Yul), **`isKnownRoot`**, **`nullifierHashes`**, verificación **Groth16** con binding de recipient/relayer/fee, **custom errors** y pragma fijo **`0.8.24`**. Riesgos informativos: trusted setup de lab, anonymity set pequeño (depth 4), front-running de withdraw en mempool, dependencia de hasher/verifier correctos en deploy.
 
 **Principios del suite / módulo 17 verificados:**
 
@@ -38,8 +38,8 @@ OpenZeppelin Contracts v5.2 (`ReentrancyGuard`), PoseidonT3 (`poseidon-solidity`
 |-----------|--------|
 | Custom errors (no `require` strings) | ✅ `PrivacyErrors` |
 | Pragma fijo `0.8.24` | ✅ (Groth16Verifier parcheado) |
-| CEI + `ReentrancyGuard` | ✅ deposit / withdraw |
-| ETH `.call` (no `transfer`/`send`) | ✅ `_sendEth` |
+| CEI + `ReentrancyGuard` | ✅ CEI + **transient** reentrancy (Cancun) |
+| ETH `.call` (no `transfer`/`send`) | ✅ Yul `call` sin returndata |
 | `NullifierAlreadySpent` | ✅ |
 | `isKnownRoot` histórico | ✅ |
 | Relayer fee split atómico | ✅ |
@@ -59,7 +59,7 @@ OpenZeppelin Contracts v5.2 (`ReentrancyGuard`), PoseidonT3 (`poseidon-solidity`
 | SWC-104 | Unchecked Call Return Value | Sí | ✅ | `_sendEth` chequea `ok` → `EthTransferFailed` |
 | SWC-105 | Unprotected Ether Withdrawal | Sí | ✅ | Solo `withdraw` con proof+nullifier; sin drain admin |
 | SWC-106 | Unprotected SELFDESTRUCT | No | N/A | Sin `selfdestruct` |
-| SWC-107 | Reentrancy | Sí | ✅ | `nonReentrant` + marcar nullifier antes de `.call` |
+| SWC-107 | Reentrancy | Sí | ✅ | `TransientReentrancyGuard` (tstore) + nullifier antes de ETH |
 | SWC-108 | State Variable Default Visibility | Sí | ✅ | `public` / `immutable` / `mapping` explícitos |
 | SWC-109 | Uninitialized Storage Pointer | No | N/A | Sin punteros storage legacy |
 | SWC-110 | Assert Violation | No | N/A | Sin `assert` de producción |
@@ -142,7 +142,7 @@ OpenZeppelin Contracts v5.2 (`ReentrancyGuard`), PoseidonT3 (`poseidon-solidity`
 | Root inválida | `InvalidRoot.t.sol` |
 | Proof / binding (SWC-122) | `PoolProofVerification.t.sol`, `ProofVerification.t.sol` |
 | Relayer fee / SWC-104 | `RelayerFee.t.sol` |
-| Reentrancy / SWC-107 | CEI en `PrivacyPool.withdraw`; `nonReentrant` |
+| Reentrancy / SWC-107 | CEI + `TransientReentrancyGuard`; nullifier antes de ETH |
 | Reject ETH / SWC-113 | `test_relayerRejectsEth_reverts`, `RejectETH` |
 | Overflow fee | `test_feeExceedsDenomination_reverts` |
 

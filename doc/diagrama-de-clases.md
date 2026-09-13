@@ -1,6 +1,7 @@
 # Diagrama de clases — ZK-SNARKs & Privacy Protocols
 
-Vista estructural propuesta de contratos, circuitos, librerías e interfaces (módulo 17, **planificación v1**).
+Vista estructural de contratos, circuitos, librerías e interfaces (módulo 17, **v1 implementado**).  
+**Sync:** 2026-09-13 · Suite **65 PASS**.
 
 ## Diagrama (Mermaid)
 
@@ -12,15 +13,14 @@ classDiagram
         <<interface>>
         +denomination() uint256
         +currentRoot() bytes32
-        +isKnownRoot(root) bool
         +nullifierHashes(hash) bool
         +deposit(commitment) payable
-        +withdraw(proof, root, nullifierHash, recipient, relayer, fee)
+        +withdraw(a,b,c,root,nullifierHash,recipient,relayer,fee)
     }
 
     class IHasher {
         <<interface>>
-        +hash(left, right) bytes32
+        +hashLeftRight(left, right) bytes32
         +hashPreimage(nullifier, secret) bytes32
     }
 
@@ -43,47 +43,53 @@ classDiagram
         +Unauthorized()
     }
 
+    class TransientReentrancyGuard {
+        <<abstract>>
+        +nonReentrant()
+    }
+
     class PoseidonT3 {
-        <<library / contract>>
-        +hash(left, right) bytes32
+        <<library>>
+        +hash(uint256[2]) uint256
+    }
+
+    class PoseidonHasher {
+        +hashLeftRight(left, right) bytes32
+        +hashPreimage(nullifier, secret) bytes32
     }
 
     class MerkleTreeWithHistory {
-        <<library / base>>
+        <<abstract>>
+        +ROOT_HISTORY_SIZE uint32
         +levels uint32
-        +currentRootIndex uint32
-        +nextIndex uint32
-        +filledSubtrees bytes32[]
-        +roots bytes32[]
+        +hasher IHasher
+        +filledSubtrees bytes32[32]
+        +zeros bytes32[32]
+        +roots bytes32[30]
+        +nextIndex() uint32
+        +currentRootIndex() uint32
         +_insert(leaf) uint32
         +isKnownRoot(root) bool
         +getLastRoot() bytes32
-    }
-
-    class ProofLib {
-        <<library>>
-        +packPublicInputs(root, nullifierHash, recipient, relayer, fee) uint256[]
-        +decodeProof(data) Proof
-    }
-
-    class Proof {
-        <<struct>>
-        +a uint256[2]
-        +b uint256[2][2]
-        +c uint256[2]
     }
 
     class Groth16Verifier {
         +verifyProof(a, b, c, input) bool
     }
 
+    class VerifierGate {
+        +VERIFIER IVerifier
+        +requireValidProof(a,b,c,input)
+    }
+
     class PrivacyPool {
         +denomination uint256
-        +hasher IHasher
         +verifier IVerifier
         +nullifierHashes mapping
+        +commitments mapping
         +deposit(commitment) payable
-        +withdraw(proof, root, nullifierHash, recipient, relayer, fee)
+        +withdraw(a,b,c,root,nullifierHash,recipient,relayer,fee)
+        +currentRoot() bytes32
     }
 
     class MockVerifier {
@@ -94,11 +100,17 @@ classDiagram
 
     class MockHasher {
         <<mock>>
-        +hash(left, right) bytes32
+        +hashLeftRight(...) bytes32
+        +hashPreimage(...) bytes32
+    }
+
+    class RejectETH {
+        <<mock>>
+        +receive()
     }
 
     class WithdrawCircuit {
-        <<circom>>
+        <<circom Withdraw(4)>>
         +nullifier private
         +secret private
         +pathElements private
@@ -111,21 +123,19 @@ classDiagram
     }
 
     IPrivacyPool <|.. PrivacyPool
-    IHasher <|.. PoseidonT3
+    IHasher <|.. PoseidonHasher
     IHasher <|.. MockHasher
     IVerifier <|.. Groth16Verifier
     IVerifier <|.. MockVerifier
 
-    PrivacyPool --> IHasher : commitment / tree nodes
+    TransientReentrancyGuard <|-- PrivacyPool
+    MerkleTreeWithHistory <|-- PrivacyPool
+    PoseidonHasher --> PoseidonT3
+    VerifierGate --> IVerifier
     PrivacyPool --> IVerifier : verifyProof
-    PrivacyPool --> MerkleTreeWithHistory : insert / roots
-    PrivacyPool --> ProofLib : public inputs
     PrivacyPool --> PrivacyErrors : reverts
-    PrivacyPool o-- Proof : withdraw args
-
-    MerkleTreeWithHistory --> IHasher : parent = hash(L,R)
-    ProofLib ..> Proof : packs
-    Groth16Verifier ..> WithdrawCircuit : VK matches circuit
+    MerkleTreeWithHistory --> IHasher : parent hash
+    Groth16Verifier ..> WithdrawCircuit : VK matches
 ```
 
 ---
@@ -134,19 +144,18 @@ classDiagram
 
 | Relación | Descripción |
 |----------|-------------|
-| Pool → Hasher | `commitment` off-chain; nodos on-chain con el mismo Poseidon |
-| Pool → MerkleTreeWithHistory | Cada deposit inserta leaf y registra root en historial |
-| Pool → Verifier | Solo withdraw con proof Groth16 válida |
-| Pool → nullifierHashes | Un nullifierHash = un withdraw (anti double-spend) |
-| Circuito → Verifier | Misma VK; señales públicas deben casar 1:1 con args de withdraw |
-| Relayer | No es contrato: EOA que llama `withdraw` y recibe `fee` |
+| Pool → Hasher | Nodos on-chain Poseidon; commitment off-chain |
+| Pool → MerkleTreeWithHistory | Deposit inserta leaf; ring de 30 roots |
+| Pool → Verifier | Withdraw solo con Groth16 válida |
+| Pool → nullifierHashes | Un hash = un withdraw |
+| Circuito → Verifier | 5 públicos en el mismo orden |
+| Relayer | EOA/`msg.sender` de withdraw; recibe `fee` |
 
 ---
 
 ## Notas de diseño
 
-- `ReentrancyGuard` en `deposit` / `withdraw`; CEI: marcar nullifier **antes** de `.call` ETH.
-- Denomination `immutable` para gas y anonymity set fijo.
-- `isKnownRoot` debe aceptar raíces anteriores (nuevos deposits no invalidan proofs en vuelo).
-- El circuito vive off-chain (`circuits/`); on-chain solo la VK embebida en `Groth16Verifier`.
-- Detalle de flujos: [`diagrama-de-flujo.md`](./diagrama-de-flujo.md) · ciclo e2e: [`flujograma.md`](./flujograma.md).
+- `TransientReentrancyGuard` (Cancun) + CEI: nullifier **antes** de ETH Yul `call`.
+- Merkle: arrays fijos + `_packedIndices` (no mappings de índices).
+- Lab: **levels = 4**; cambiar circuito + re-exportar VK para otra profundidad.
+- Suite: **65 PASS**. [`GAS.md`](./GAS.md) · [`SWC-AUDIT.md`](./SWC-AUDIT.md) · flujos: [`diagrama-de-flujo.md`](./diagrama-de-flujo.md) / [`flujograma.md`](./flujograma.md).

@@ -1,19 +1,20 @@
 # Flujograma — Ciclo completo Privacy Pool (ZK-SNARKs)
 
-Flujo extremo a extremo entre usuarios, circuito, pool, verifier y relayer (módulo 17, **planificación v1**).
+Flujo extremo a extremo entre usuarios, circuito, pool, verifier y relayer (módulo 17, **v1 implementado**).  
+**Sync:** 2026-09-13 · **65 PASS**.
 
 ## Actores
 
 | Actor | Rol |
 |-------|-----|
 | Depositor | Genera `(nullifier, secret)`, calcula commitment, llama `deposit` |
-| Withdrawer | Construye witness + proof Groth16; llama `withdraw` (o pide a relayer) |
-| Relayer | Paga gas; recibe `fee`; entrega proof en nombre del usuario |
-| PrivacyPool | Inserta leaves, guarda roots/nullifiers, verifica proof, paga ETH |
+| Withdrawer | Witness + proof Groth16; llama `withdraw` (o vía relayer) |
+| Relayer | Paga gas; recibe `fee` ligado al proof |
+| PrivacyPool | Leaves, roots, nullifiers, verify, payout Yul |
 | Groth16Verifier | Pairing Alt_BN128 (`ecPairing` `0x08`) |
-| Circom / SnarkJS | Compila circuito, genera proof y VK |
-| Admin / owner | Deploy denomination, hasher, verifier (mínimo en v1) |
-| CI / Foundry | Unit, fixtures de proof, fuzz Merkle, gas |
+| Circom / SnarkJS | `Withdraw(4)`, fixtures, export VK |
+| Deployer | `Deploy.s.sol`: hasher + verifier + pool |
+| CI / Foundry | Unit, fuzz, gas snapshot, e2e fixture |
 
 ---
 
@@ -21,10 +22,9 @@ Flujo extremo a extremo entre usuarios, circuito, pool, verifier y relayer (mód
 
 ```mermaid
 flowchart TD
-    Start([Inicio]) --> Dep[Deploy Hasher + Groth16Verifier + PrivacyPool]
-    Dep --> Den[denomination immutable]
-    Den --> Link[Pool apunta a hasher y verifier]
-    Link --> Ready([Pool listo para deposits])
+    Start([Inicio]) --> Dep[Deploy.s.sol: PoseidonHasher + Groth16Verifier + PrivacyPool]
+    Dep --> Env[DENOMINATION_WEI + MERKLE_TREE_LEVELS=4]
+    Env --> Ready([Pool listo — levels deben = circuito])
 ```
 
 ---
@@ -64,7 +64,7 @@ flowchart TD
     C --> D[3. fee <= denomination]
     D --> E[4. verifyProof Groth16]
     E --> F[5. Marcar nullifier CEI]
-    F --> G[6. Transferencias ETH .call]
+    F --> G[6. Yul call ETH recipient/relayer]
     B -.->|fail| X1[UnknownRoot]
     C -.->|fail| X2[NullifierAlreadySpent]
     D -.->|fail| X3[FeeExceedsDenomination]
@@ -79,13 +79,13 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    Start([circuits/withdraw.circom]) --> Comp[circom compile r1cs wasm]
-    Comp --> Ptau[Powers of Tau lab — no commitear]
-    Ptau --> Setup[snarkjs groth16 setup → zkey]
-    Setup --> VK[Export verification_key / Verifier.sol]
-    VK --> Fix[generate-proof → test/fixtures]
-    Fix --> Forge[Foundry consume fixtures]
-    Forge --> End([Tests de integración ZK])
+    Start([circuits/withdraw.circom Withdraw 4]) --> Comp[npm run compile:circuit]
+    Comp --> Ptau[ptau lab power-12 local]
+    Ptau --> Setup[npm run generate:proof]
+    Setup --> VK[npm run export:verifier]
+    VK --> Fix[test/fixtures/withdraw]
+    Fix --> Forge[Foundry e2e / gas]
+    Forge --> End([65 PASS])
 ```
 
 ---
@@ -98,8 +98,8 @@ flowchart TD
     Build --> Send[Envía proof + públicos al relayer]
     Send --> Rel[Relayer: withdraw ... fee > 0]
     Rel --> Pool[PrivacyPool valida y paga]
-    Pool --> U[recipient recibe denomination - fee]
-    Pool --> R[relayer recibe fee + reembolso de gas off-protocol]
+    Pool --> U[recipient: denomination - fee]
+    Pool --> R[relayer: fee]
     U --> Done([Tx confirmada])
     R --> Done
 ```
@@ -116,12 +116,13 @@ flowchart TD
 | Root nunca vista | `UnknownRoot` |
 | Proof / signals alterados | `InvalidZKProof` |
 | `fee > denomination` | `FeeExceedsDenomination` |
-| `msg.value != denomination` en deposit | `InvalidDenomination` |
+| Recipient/relayer rechaza ETH | `EthTransferFailed` |
 
 ---
 
 ## Relación con otros diagramas
 
 - Estructura de tipos: [`diagrama-de-clases.md`](./diagrama-de-clases.md)
-- Decisiones internas detalladas: [`diagrama-de-flujo.md`](./diagrama-de-flujo.md)
-- Fases y gates: [`planificacion.md`](./planificacion.md)
+- Decisiones internas: [`diagrama-de-flujo.md`](./diagrama-de-flujo.md)
+- Fases / gas / SWC: [`planificacion.md`](./planificacion.md) · [`GAS.md`](./GAS.md) · [`SWC-AUDIT.md`](./SWC-AUDIT.md)
+- Índice: [`README.md`](./README.md)
