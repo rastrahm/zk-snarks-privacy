@@ -1,6 +1,6 @@
 # Planificación — Módulo 17: ZK-SNARKs & Privacy Protocols
 
-**Estado:** Fases **0–3** ✅. Fases **4–7** ⏳ pendientes.  
+**Estado:** Fases **0–4** ✅. Fases **5–7** ⏳ pendientes.  
 **Regla de avance:** cada fase requiere **autorización explícita** del responsable antes de empezar (*“autorizo Fase N”* o equivalente).
 
 ---
@@ -174,7 +174,7 @@ Obligatorios del módulo: `NullifierAlreadySpent()`, validación de root histór
 | 1 | Errors + Hasher + MerkleTreeWithHistory | ✅ Completada | ✅ Autorizada |
 | 2 | Circuito Circom `withdraw` + compile/prove scripts | ✅ Completada | ✅ Autorizada |
 | 3 | `Groth16Verifier` + `IVerifier` + fixtures | ✅ Completada | ✅ Autorizada |
-| 4 | `PrivacyPool.deposit` + raíces históricas | ⏳ Pendiente | ⏳ Esperando |
+| 4 | `PrivacyPool.deposit` + raíces históricas | ✅ Completada | ✅ Autorizada |
 | 5 | `PrivacyPool.withdraw` + nullifier + relayer split | ⏳ Pendiente | ⏳ Esperando |
 | 6 | Suite seguridad: replay / root / proof / fee | ⏳ Pendiente | ⏳ Esperando |
 | 7 | Gas + Deploy + NatSpec / cierre v1 | ⏳ Pendiente | ⏳ Esperando |
@@ -273,7 +273,7 @@ Obligatorios del módulo: `NullifierAlreadySpent()`, validación de root histór
 
 ---
 
-### Fase 4 — PrivacyPool.deposit
+### Fase 4 — PrivacyPool.deposit ✅
 
 **Objetivo:** depósitos con denomination fija e inserción Merkle.
 
@@ -282,6 +282,13 @@ Obligatorios del módulo: `NullifierAlreadySpent()`, validación de root histór
 3. Rechazo commitment inválido / árbol lleno.
 
 **Criterio de salida:** deposit unit + fuzz denomination en verde.
+
+**Hecho (2026-09-13):**
+- `IPrivacyPool` + `PrivacyPool` (hereda `MerkleTreeWithHistory`, `ReentrancyGuard`).
+- `deposit`: denomination exacta, zero/duplicate commitment, `_insert`, `commitments`, evento `Deposit`.
+- `nullifierHashes` + `verifier` listos para Fase 5.
+- Tests: `PrivacyPool.t.sol` — success, roots historicas, TreeFull, fuzz denomination + unique leaves, Poseidon hasher.
+- **`forge test` → 32 PASS**.
 
 ---
 
@@ -371,10 +378,10 @@ Pool de **monto fijo** (p. ej. `0.1 ether`) para maximizar el anonymity set educ
 - [ ] Circom/SnarkJS documentados; secretos/ptau/zkey no versionados.
 - [ ] Documentación (`doc/`) alineada al código final.
 
-> **Fases 0–3 cerradas.** No iniciar Fase 4 hasta autorización explícita.
+> **Fases 0–4 cerradas.** No iniciar Fase 5 hasta autorización explícita.
 
 ---
 
 ## 10. Próximo paso
 
-Responder con **“autorizo Fase 4”** para `PrivacyPool.deposit` + raíces históricas.
+Responder con **“autorizo Fase 5”** para `PrivacyPool.withdraw` + nullifier + relayer fee split.
