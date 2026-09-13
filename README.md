@@ -2,7 +2,7 @@
 
 Privacy pool educativo (commitment Merkle + nullifiers + retiros Groth16) con relayer fee split. Solidity `0.8.24` + Foundry + Circom/SnarkJS.
 
-**Estado:** Fases **0–5** ✅. Fases **6–7** pendientes (requieren autorización).
+**Estado:** Fases **0–6** ✅. Fase **7** pendiente (requiere autorización).
 
 ## Docs
 
@@ -12,6 +12,7 @@ Privacy pool educativo (commitment Merkle + nullifiers + retiros Groth16) con re
 | [`doc/diagrama-de-clases.md`](./doc/diagrama-de-clases.md) | UML |
 | [`doc/diagrama-de-flujo.md`](./doc/diagrama-de-flujo.md) | Deposit / prove / withdraw |
 | [`doc/flujograma.md`](./doc/flujograma.md) | Ciclo e2e + relayer |
+| [`doc/SWC-AUDIT.md`](./doc/SWC-AUDIT.md) | Matriz SWC-100–136 |
 | [`circuits/README.md`](./circuits/README.md) | Circuito withdraw + señales públicas |
 
 ## Stack
