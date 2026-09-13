@@ -1,6 +1,6 @@
 # Planificación — Módulo 17: ZK-SNARKs & Privacy Protocols
 
-**Estado:** Fases **0–1** ✅. Fases **2–7** ⏳ pendientes.  
+**Estado:** Fases **0–2** ✅. Fases **3–7** ⏳ pendientes.  
 **Regla de avance:** cada fase requiere **autorización explícita** del responsable antes de empezar (*“autorizo Fase N”* o equivalente).
 
 ---
@@ -172,7 +172,7 @@ Obligatorios del módulo: `NullifierAlreadySpent()`, validación de root histór
 |------|--------|--------|--------------|
 | 0 | Setup Foundry + Node/Circom + estructura | ✅ Completada | ✅ Autorizada |
 | 1 | Errors + Hasher + MerkleTreeWithHistory | ✅ Completada | ✅ Autorizada |
-| 2 | Circuito Circom `withdraw` + compile/prove scripts | ⏳ Pendiente | ⏳ Esperando |
+| 2 | Circuito Circom `withdraw` + compile/prove scripts | ✅ Completada | ✅ Autorizada |
 | 3 | `Groth16Verifier` + `IVerifier` + fixtures | ⏳ Pendiente | ⏳ Esperando |
 | 4 | `PrivacyPool.deposit` + raíces históricas | ⏳ Pendiente | ⏳ Esperando |
 | 5 | `PrivacyPool.withdraw` + nullifier + relayer split | ⏳ Pendiente | ⏳ Esperando |
@@ -231,7 +231,7 @@ Obligatorios del módulo: `NullifierAlreadySpent()`, validación de root histór
 
 ---
 
-### Fase 2 — Circuito Circom + scripts de proof
+### Fase 2 — Circuito Circom + scripts de proof ✅
 
 **Objetivo:** circuito de withdraw reproducible.
 
@@ -240,6 +240,16 @@ Obligatorios del módulo: `NullifierAlreadySpent()`, validación de root histór
 3. Documentar ptau de lab y comandos; artefactos en `circuits/build/` ignorados.
 
 **Criterio de salida:** proof de lab generada; señales públicas documentadas.
+
+**Hecho (2026-09-13):**
+- Circom **2.1.9** instalado (`cargo install` desde iden3); `circomlibjs` en npm.
+- `circuits/merkleTree.circom` — DualMux + Poseidon HashLeftRight + MerkleTreeChecker.
+- `circuits/withdraw.circom` — `Withdraw(4)`: commitment, nullifierHash Poseidon(1), membership, binding recipient/relayer/fee.
+- Compilacion: **1428** constraints, **5** public inputs.
+- Scripts: `compile-circuit.mjs`, `generate-proof.mjs` (ptau lab power-12 local si no hay `PTAU_PATH`).
+- Fixtures: `test/fixtures/withdraw/{input,proof,public,verification_key}.json` — `snarkjs.verify = true`.
+- Docs: `circuits/README.md` (orden de señales publicas).
+- **`forge test` → 13 PASS** (sin regresion).
 
 ---
 
@@ -353,10 +363,10 @@ Pool de **monto fijo** (p. ej. `0.1 ether`) para maximizar el anonymity set educ
 - [ ] Circom/SnarkJS documentados; secretos/ptau/zkey no versionados.
 - [ ] Documentación (`doc/`) alineada al código final.
 
-> **Fases 0–1 cerradas.** No iniciar Fase 2 hasta autorización explícita.
+> **Fases 0–2 cerradas.** No iniciar Fase 3 hasta autorización explícita.
 
 ---
 
 ## 10. Próximo paso
 
-Responder con **“autorizo Fase 2”** para el circuito Circom `withdraw` + scripts compile/prove.
+Responder con **“autorizo Fase 3”** para `Groth16Verifier` + `IVerifier` + fixtures on-chain.

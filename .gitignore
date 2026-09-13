@@ -29,6 +29,7 @@ ceremony/
 zkeys/*.zkey
 !zkeys/.gitkeep
 verification_key.json
+!test/fixtures/**/verification_key.json
 # Permitir VKs de test versionadas si se documentan explícitamente:
 # circuits/build/**/verification_key.json puede regenerarse; no commitear zkeys de producción
 
