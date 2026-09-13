@@ -1,6 +1,6 @@
 # Planificación — Módulo 17: ZK-SNARKs & Privacy Protocols
 
-**Estado:** Fases **0–2** ✅. Fases **3–7** ⏳ pendientes.  
+**Estado:** Fases **0–3** ✅. Fases **4–7** ⏳ pendientes.  
 **Regla de avance:** cada fase requiere **autorización explícita** del responsable antes de empezar (*“autorizo Fase N”* o equivalente).
 
 ---
@@ -173,7 +173,7 @@ Obligatorios del módulo: `NullifierAlreadySpent()`, validación de root histór
 | 0 | Setup Foundry + Node/Circom + estructura | ✅ Completada | ✅ Autorizada |
 | 1 | Errors + Hasher + MerkleTreeWithHistory | ✅ Completada | ✅ Autorizada |
 | 2 | Circuito Circom `withdraw` + compile/prove scripts | ✅ Completada | ✅ Autorizada |
-| 3 | `Groth16Verifier` + `IVerifier` + fixtures | ⏳ Pendiente | ⏳ Esperando |
+| 3 | `Groth16Verifier` + `IVerifier` + fixtures | ✅ Completada | ✅ Autorizada |
 | 4 | `PrivacyPool.deposit` + raíces históricas | ⏳ Pendiente | ⏳ Esperando |
 | 5 | `PrivacyPool.withdraw` + nullifier + relayer split | ⏳ Pendiente | ⏳ Esperando |
 | 6 | Suite seguridad: replay / root / proof / fee | ⏳ Pendiente | ⏳ Esperando |
@@ -253,7 +253,7 @@ Obligatorios del módulo: `NullifierAlreadySpent()`, validación de root histór
 
 ---
 
-### Fase 3 — Verifier on-chain + fixtures
+### Fase 3 — Verifier on-chain + fixtures ✅
 
 **Objetivo:** `Groth16Verifier` integrable desde Foundry.
 
@@ -262,6 +262,14 @@ Obligatorios del módulo: `NullifierAlreadySpent()`, validación de root histór
 3. Fixtures en `test/fixtures/` consumibles por tests Solidity.
 
 **Criterio de salida:** test de pairing válida + proof inválida → revert.
+
+**Hecho (2026-09-13):**
+- `scripts/export-verifier.mjs` — snarkjs export + patch pragma `0.8.24` + `is IVerifier`.
+- `src/verifiers/Groth16Verifier.sol` (GPL-3.0 snarkJS) + `VerifierGate` (`InvalidZKProof`).
+- `src/interfaces/IVerifier.sol` + `src/mocks/MockVerifier.sol`.
+- Fixture `test/fixtures/withdraw/solidity_proof.json` (a/b/c/input hex, orden Ethereum).
+- Tests: `ProofVerification.t.sol` — valid, tampered input/proof → false / `InvalidZKProof`, mock gate.
+- **`forge test` → 20 PASS**.
 
 ---
 
@@ -363,10 +371,10 @@ Pool de **monto fijo** (p. ej. `0.1 ether`) para maximizar el anonymity set educ
 - [ ] Circom/SnarkJS documentados; secretos/ptau/zkey no versionados.
 - [ ] Documentación (`doc/`) alineada al código final.
 
-> **Fases 0–2 cerradas.** No iniciar Fase 3 hasta autorización explícita.
+> **Fases 0–3 cerradas.** No iniciar Fase 4 hasta autorización explícita.
 
 ---
 
 ## 10. Próximo paso
 
-Responder con **“autorizo Fase 3”** para `Groth16Verifier` + `IVerifier` + fixtures on-chain.
+Responder con **“autorizo Fase 4”** para `PrivacyPool.deposit` + raíces históricas.

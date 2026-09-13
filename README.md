@@ -2,7 +2,7 @@
 
 Privacy pool educativo (commitment Merkle + nullifiers + retiros Groth16) con relayer fee split. Solidity `0.8.24` + Foundry + Circom/SnarkJS.
 
-**Estado:** Fases **0–2** ✅. Fases **3–7** pendientes (requieren autorización).
+**Estado:** Fases **0–3** ✅. Fases **4–7** pendientes (requieren autorización).
 
 ## Docs
 
@@ -12,6 +12,7 @@ Privacy pool educativo (commitment Merkle + nullifiers + retiros Groth16) con re
 | [`doc/diagrama-de-clases.md`](./doc/diagrama-de-clases.md) | UML |
 | [`doc/diagrama-de-flujo.md`](./doc/diagrama-de-flujo.md) | Deposit / prove / withdraw |
 | [`doc/flujograma.md`](./doc/flujograma.md) | Ciclo e2e + relayer |
+| [`circuits/README.md`](./circuits/README.md) | Circuito withdraw + señales públicas |
 
 ## Stack
 
@@ -52,12 +53,12 @@ Necesario a partir de **Fase 2** (circuitos). En Fase 0 solo está el scaffold N
 npm install
 ```
 
-Scripts (stubs hasta Fase 2–3):
+Scripts:
 
 ```bash
 npm run compile:circuit   # Fase 2
 npm run generate:proof    # Fase 2
-npm run export:verifier   # Fase 3
+npm run export:verifier   # Fase 3 → src/verifiers/Groth16Verifier.sol
 ```
 
 **No versionar:** `*.ptau`, `*.zkey`, `circuits/build/` (ver `.gitignore`).
