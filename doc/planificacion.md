@@ -1,6 +1,6 @@
 # Planificación — Módulo 17: ZK-SNARKs & Privacy Protocols
 
-**Estado:** Fases **0–5** ✅. Fases **6–7** ⏳ pendientes.  
+**Estado:** Fases **0–6** ✅. Fase **7** ⏳ pendiente.  
 **Regla de avance:** cada fase requiere **autorización explícita** del responsable antes de empezar (*“autorizo Fase N”* o equivalente).
 
 ---
@@ -176,7 +176,7 @@ Obligatorios del módulo: `NullifierAlreadySpent()`, validación de root histór
 | 3 | `Groth16Verifier` + `IVerifier` + fixtures | ✅ Completada | ✅ Autorizada |
 | 4 | `PrivacyPool.deposit` + raíces históricas | ✅ Completada | ✅ Autorizada |
 | 5 | `PrivacyPool.withdraw` + nullifier + relayer split | ✅ Completada | ✅ Autorizada |
-| 6 | Suite seguridad: replay / root / proof / fee | ⏳ Pendiente | ⏳ Esperando |
+| 6 | Suite seguridad: replay / root / proof / fee | ✅ Completada | ✅ Autorizada |
 | 7 | Gas + Deploy + NatSpec / cierre v1 | ⏳ Pendiente | ⏳ Esperando |
 
 ---
@@ -311,7 +311,7 @@ Obligatorios del módulo: `NullifierAlreadySpent()`, validación de root histór
 
 ---
 
-### Fase 6 — Matriz de seguridad (tests del módulo)
+### Fase 6 — Matriz de seguridad (tests del módulo) ✅
 
 | Tipo | Qué valida |
 |------|------------|
@@ -323,6 +323,14 @@ Obligatorios del módulo: `NullifierAlreadySpent()`, validación de root histór
 
 **Criterio de salida:** `NullifierReplay`, `InvalidRoot`, `ProofVerification`, `RelayerFee` en verde.
 
+**Hecho (2026-09-13):**
+- `test/NullifierReplay.t.sol` — replay + fuzz nullifier.
+- `test/InvalidRoot.t.sol` — unknown/zero/stale root + fuzz.
+- `test/PoolProofVerification.t.sol` — e2e valida, tampered proof/fee binding, mock false.
+- `test/RelayerFee.t.sol` — split exacto, max fee, RejectETH, fuzz fee.
+- `doc/SWC-AUDIT.md` — matriz SWC-100–136 (estilo `01-erc20`), 0 vulnerables, 6 informativos.
+- **`forge test` → 61 PASS**.
+
 ---
 
 ### Fase 7 — Gas + Deploy + hardening
@@ -332,7 +340,7 @@ Obligatorios del módulo: `NullifierAlreadySpent()`, validación de root histór
 1. Gas: deposit, withdraw, verifier; snapshot / `doc/GAS.md` (si se autoriza crear).
 2. `Deploy.s.sol` + NatSpec completo.
 3. Actualizar diagramas / planificación a “implementado”.
-4. Opcional: `doc/SWC-AUDIT.md` alineado a módulos previos.
+4. Opcional: actualizar `doc/SWC-AUDIT.md` si el código cambia.
 
 **Criterio de salida:** suite completa en verde; módulo v1 listo para cierre.
 
@@ -385,10 +393,10 @@ Pool de **monto fijo** (p. ej. `0.1 ether`) para maximizar el anonymity set educ
 - [ ] Circom/SnarkJS documentados; secretos/ptau/zkey no versionados.
 - [ ] Documentación (`doc/`) alineada al código final.
 
-> **Fases 0–5 cerradas.** No iniciar Fase 6 hasta autorización explícita.
+> **Fases 0–6 cerradas.** No iniciar Fase 7 hasta autorización explícita.
 
 ---
 
 ## 10. Próximo paso
 
-Responder con **“autorizo Fase 6”** para la matriz de seguridad (replay / root / proof / fee dedicados).
+Responder con **“autorizo Fase 7”** para gas + Deploy + hardening / cierre v1.
