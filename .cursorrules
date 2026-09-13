@@ -1,0 +1,30 @@
+# .cursorrules — Module 17: ZK-SNARKs & Privacy Protocols
+
+## MODULE OVERVIEW
+Focus on building zero-knowledge privacy protocols, Merkle tree commitment schemes, and Groth16/Plonk proof verifiers using Circom, SnarkJS, and Solidity 0.8.24 verified via Foundry.
+
+---
+
+## 1. TECHNICAL CONSTRAINTS & STACK
+
+- **Compiler Version:** Strictly `pragma solidity 0.8.24;` (no floating pragmas).
+- **Tooling:** Foundry (`forge` for smart contract testing, verifier integration, and gas profiling) combined with Circom/SnarkJS for circuit compilation and proof generation.
+- **Crypto Primitives:** Poseidon Hash / MiMC for gas-efficient on-chain Merkle tree roots, and Alt_BN128 elliptic curve pairing for Groth16 verification (`ecPairing` precompile at `0x08`).
+
+---
+
+## 2. CODING & SECURITY RULES
+
+- **Nullifier Hash Tracking:** Strict mapping of used nullifiers (`mapping(bytes32 => bool) public nullifierHashes`) to prevent double-spending / double-withdrawal attacks (`error NullifierAlreadySpent()`).
+- **Merkle Tree Root Validation:** Enforce historical root validation (`mapping(bytes32 => bool) public isKnownRoot`) to allow valid withdrawals even if new deposits update the current root.
+- **Atomic Relayer Payouts:** Support gasless withdrawals via third-party relayers by splitting commitment payouts between the recipient address and the relayer fee directly in the proof payload execution.
+- **Zero-Knowledge Proof Verification:** Direct assembly or auto-generated `Groth16Verifier` calls enforcing strict pairing check validation (`require(verifier.verifyProof(...), "Invalid ZK Proof")`).
+
+---
+
+## 3. TESTING REQUIREMENTS
+
+- **Foundry Proof Verification Tests:** Test valid proof submissions generated via test circuits against on-chain verifiers.
+- **Double-Spend / Nullifier Replay Tests:** Assert failure when attempting to reuse an already spent nullifier hash.
+- **Invalid Root / Tampered Proof Tests:** Assert explicit revert when submitting forged proofs or invalid Merkle roots.
+- **Relayer Fee Payout Tests:** Verify correct split of funds between recipient EOA and relayer address.
