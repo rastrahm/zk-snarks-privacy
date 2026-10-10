@@ -158,4 +158,4 @@ classDiagram
 - `TransientReentrancyGuard` (Cancun) + CEI: nullifier **antes** de ETH Yul `call`.
 - Merkle: arrays fijos + `_packedIndices` (no mappings de índices).
 - Lab: **levels = 4**; cambiar circuito + re-exportar VK para otra profundidad.
-- Suite: **65 PASS**. [`GAS.md`](./GAS.md) · [`SWC-AUDIT.md`](./SWC-AUDIT.md) · flujos: [`diagrama-de-flujo.md`](./diagrama-de-flujo.md) / [`flujograma.md`](./flujograma.md).
+- Suite: **65 PASS**. [`GAS-ES.md`](./GAS-ES.md) · [`SWC-AUDIT-ES.md`](./SWC-AUDIT-ES.md) · flujos: [`diagrama-de-flujo-ES.md`](./diagrama-de-flujo-ES.md) / [`flujograma-ES.md`](./flujograma-ES.md).

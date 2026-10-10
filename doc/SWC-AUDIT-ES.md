@@ -1,6 +1,6 @@
 # Auditoría SWC — ZK-SNARKs & Privacy Protocols
 
-Verificación del Privacy Pool contra el [SWC Registry](https://swcregistry.io/) (EIP-1470). Estilo alineado a [`01-erc20/doc/SWC-AUDIT.md`](../../01-erc20/doc/SWC-AUDIT.md).
+Verificación del Privacy Pool contra el [SWC Registry](https://swcregistry.io/) (EIP-1470). Estilo alineado a [`01-erc20/doc/SWC-AUDIT-ES.md`](../../01-erc20/doc/SWC-AUDIT-ES.md).
 
 > **Nota:** El SWC Registry no se mantiene activamente desde ~2020. Complementar con [SCSVS](https://github.com/ComposableSecurity/SCSVS) y [EEA EthTrust](https://entethalliance.org/specs/ethtrust/).
 
@@ -18,7 +18,7 @@ forge-std, OpenZeppelin Contracts v5.2 (en `lib/`; pool no usa OZ ReentrancyGuar
 **Mocks (fuera de prod):** `MockHasher`, `MockVerifier`, `RejectETH`  
 **Fecha:** 2026-09-13 (post Fase 7 / sync docs)  
 **Referencia tests:** `test/NullifierReplay.t.sol`, `test/InvalidRoot.t.sol`, `test/PoolProofVerification.t.sol`, `test/RelayerFee.t.sol`, `test/ProofVerification.t.sol`, `test/PrivacyPool*.t.sol`, `test/gas/`  
-**Índice:** [`README.md`](./README.md) · README módulo: [`../README.md`](../README.md)
+**Índice:** [`README-ES.md`](./README-ES.md) · README módulo: [`../README-ES.md`](../README-ES.md)
 
 ---
 
@@ -153,5 +153,5 @@ forge-std, OpenZeppelin Contracts v5.2 (en `lib/`; pool no usa OZ ReentrancyGuar
 - [SWC Registry](https://swcregistry.io/)
 - [EIP-1470](https://eips.ethereum.org/EIPS/eip-1470)
 - [Tornado Cash research / nullifiers](https://tornado.cash/) (referencia educativa)
-- [`01-erc20/doc/SWC-AUDIT.md`](../../01-erc20/doc/SWC-AUDIT.md)
+- [`01-erc20/doc/SWC-AUDIT-ES.md`](../../01-erc20/doc/SWC-AUDIT-ES.md)
 - [`circuits/README.md`](../circuits/README.md)
