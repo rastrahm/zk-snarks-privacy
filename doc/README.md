@@ -1,19 +1,15 @@
-# Documentación — Módulo 17: ZK-SNARKs & Privacy Protocols
+# Documentation / Documentación — Module 17: ZK-SNARKs & Privacy Protocols
 
-Índice de diseño, seguridad, gas y circuitos del Privacy Pool (commitment Merkle Poseidon + Groth16 + relayer fee).
+| Topic / Tema | English | Español |
+|--------------|---------|---------|
+| Index / Índice | [README-EN.md](./README-EN.md) | [README-ES.md](./README-ES.md) |
+| Planning / Planificación | [planificacion-EN.md](./planificacion-EN.md) | [planificacion-ES.md](./planificacion-ES.md) |
+| Class diagram / Diagrama de clases | [diagrama-de-clases-EN.md](./diagrama-de-clases-EN.md) | [diagrama-de-clases-ES.md](./diagrama-de-clases-ES.md) |
+| Flow diagram / Diagrama de flujo | [diagrama-de-flujo-EN.md](./diagrama-de-flujo-EN.md) | [diagrama-de-flujo-ES.md](./diagrama-de-flujo-ES.md) |
+| E2E flowchart / Flujograma | [flujograma-EN.md](./flujograma-EN.md) | [flujograma-ES.md](./flujograma-ES.md) |
+| SWC audit / Auditoría SWC | [SWC-AUDIT-EN.md](./SWC-AUDIT-EN.md) | [SWC-AUDIT-ES.md](./SWC-AUDIT-ES.md) |
+| Gas | [GAS-EN.md](./GAS-EN.md) | [GAS-ES.md](./GAS-ES.md) |
+| Decisions & logic / Decisiones y lógica | [DECISIONES-Y-LOGICA-EN.md](./DECISIONES-Y-LOGICA-EN.md) | [DECISIONES-Y-LOGICA-ES.md](./DECISIONES-Y-LOGICA-ES.md) |
+| Circuit / Circuito | [../circuits/README.md](../circuits/README.md) | [../circuits/README.md](../circuits/README.md) |
 
-| Archivo | Contenido | Estado |
-|---------|-----------|--------|
-| [planificacion.md](./planificacion.md) | Fases 0–7, arquitectura implementada, criterios | ✅ Cerrado |
-| [diagrama-de-clases.md](./diagrama-de-clases.md) | UML: pool, Merkle, hasher, verifier, circuito | ✅ Actualizado |
-| [diagrama-de-flujo.md](./diagrama-de-flujo.md) | Decisiones: deposit → prove → withdraw | ✅ Actualizado |
-| [flujograma.md](./flujograma.md) | E2E deposit/prove/withdraw + relayer + defensas | ✅ Actualizado |
-| [SWC-AUDIT.md](./SWC-AUDIT.md) | Matriz SWC-100–136 (0 vulnerables) | ✅ |
-| [GAS.md](./GAS.md) | Opts transient/Yul/Merkle + snapshot | ✅ |
-| [../circuits/README.md](../circuits/README.md) | Circuito `Withdraw(4)` + señales públicas | ✅ |
-
-**Estado del módulo:** Fases **0–7** ✅ (v1 cerrado).  
-**Suite verificada:** `forge test` → **65 PASS**.  
-**Sync docs:** 2026-09-13 (alineado a `src/` / `circuits/` post Fase 7).
-
-README del módulo: [`../README.md`](../README.md).
+Module README / README del módulo: [`../README.md`](../README.md)

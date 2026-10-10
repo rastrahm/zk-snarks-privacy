@@ -79,4 +79,4 @@ Env: `PRIVATE_KEY`, `DENOMINATION_WEI`, `MERKLE_TREE_LEVELS` (default 4). Ver `.
 
 **Importante:** `MERKLE_TREE_LEVELS` debe coincidir con `Withdraw(N)` del circuito y el VK embebido en `Groth16Verifier`.
 
-README: [`../README.md`](../README.md) · Índice docs: [`README.md`](./README.md) · SWC: [`SWC-AUDIT.md`](./SWC-AUDIT.md) · Plan: [`planificacion.md`](./planificacion.md)
+README: [`../README-ES.md`](../README-ES.md) · Índice docs: [`README-ES.md`](./README-ES.md) · SWC: [`SWC-AUDIT-ES.md`](./SWC-AUDIT-ES.md) · Plan: [`planificacion-ES.md`](./planificacion-ES.md)

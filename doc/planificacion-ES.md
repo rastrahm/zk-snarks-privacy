@@ -73,15 +73,18 @@ Stack: **Foundry + Solidity `0.8.24`** + **Circom + SnarkJS**. Frontend Next.js 
 
 ```
 17-zk-snarks-privacy/
-├── README.md
+├── README.md                    # índice bilingüe
+├── README-ES.md / README-EN.md
 ├── doc/
-│   ├── README.md
-│   ├── planificacion.md
-│   ├── diagrama-de-clases.md
-│   ├── diagrama-de-flujo.md
-│   ├── flujograma.md
-│   ├── SWC-AUDIT.md
-│   └── GAS.md
+│   ├── README.md                # índice bilingüe
+│   ├── README-{ES,EN}.md
+│   ├── planificacion-{ES,EN}.md
+│   ├── diagrama-de-clases-{ES,EN}.md
+│   ├── diagrama-de-flujo-{ES,EN}.md
+│   ├── flujograma-{ES,EN}.md
+│   ├── SWC-AUDIT-{ES,EN}.md
+│   ├── GAS-{ES,EN}.md
+│   └── DECISIONES-Y-LOGICA-{ES,EN}.md
 ├── circuits/
 │   ├── README.md
 │   ├── withdraw.circom          # Withdraw(4)

@@ -122,7 +122,7 @@ flowchart TD
 
 ## Relación con otros diagramas
 
-- Estructura de tipos: [`diagrama-de-clases.md`](./diagrama-de-clases.md)
-- Decisiones internas: [`diagrama-de-flujo.md`](./diagrama-de-flujo.md)
-- Fases / gas / SWC: [`planificacion.md`](./planificacion.md) · [`GAS.md`](./GAS.md) · [`SWC-AUDIT.md`](./SWC-AUDIT.md)
-- Índice: [`README.md`](./README.md)
+- Estructura de tipos: [`diagrama-de-clases-ES.md`](./diagrama-de-clases-ES.md)
+- Decisiones internas: [`diagrama-de-flujo-ES.md`](./diagrama-de-flujo-ES.md)
+- Fases / gas / SWC: [`planificacion-ES.md`](./planificacion-ES.md) · [`GAS-ES.md`](./GAS-ES.md) · [`SWC-AUDIT-ES.md`](./SWC-AUDIT-ES.md)
+- Índice: [`README-ES.md`](./README-ES.md)
