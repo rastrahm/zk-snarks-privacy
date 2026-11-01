@@ -3,7 +3,7 @@
 Educational privacy pool: Poseidon Merkle commitments + nullifiers + Groth16 withdrawals + relayer fee split.  
 Privacy pool educativo: commitments Merkle Poseidon + nullifiers + retiros Groth16 + fee split para relayer.
 
-Solidity `0.8.24` · Foundry · Circom / SnarkJS · **65 PASS** · Phases / Fases **0–7** ✅
+Solidity `0.8.24` · Foundry · Circom / SnarkJS · **70 PASS** · Phases / Fases **0–7** ✅
 
 ## Language / Idioma
 

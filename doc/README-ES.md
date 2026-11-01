@@ -14,7 +14,7 @@
 | [../circuits/README.md](../circuits/README.md) | Circuito `Withdraw(4)` + señales públicas | ✅ |
 
 **Estado del módulo:** Fases **0–7** ✅ (v1 cerrado).  
-**Suite verificada:** `forge test` → **65 PASS**.  
+**Suite verificada:** `forge test` → **70 PASS**.  
 **Sync docs:** 2026-09-13 (alineado a `src/` / `circuits/` post Fase 7).
 
 README del módulo: [`../README-ES.md`](../README-ES.md).

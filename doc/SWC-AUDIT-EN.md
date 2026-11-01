@@ -140,6 +140,7 @@ forge-std, OpenZeppelin Contracts v5.2 (in `lib/`; the pool does not use OZ Reen
 |--------------|---------|
 | Double-spend / SWC-121 | `NullifierReplay.t.sol` |
 | Invalid root | `InvalidRoot.t.sol` |
+| 30-root history window (eviction + recovery) | `RootHistoryWindow.t.sol` |
 | Proof / binding (SWC-122) | `PoolProofVerification.t.sol`, `ProofVerification.t.sol` |
 | Relayer fee / SWC-104 | `RelayerFee.t.sol` |
 | Reentrancy / SWC-107 | CEI + `TransientReentrancyGuard`; nullifier before ETH |
