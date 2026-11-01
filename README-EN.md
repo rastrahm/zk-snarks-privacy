@@ -3,7 +3,7 @@
 Educational privacy pool (Poseidon Merkle commitments + nullifiers + Groth16 withdrawals) with relayer fee split. Solidity `0.8.24` + Foundry + Circom/SnarkJS.
 
 **Status:** Phases **0–7** ✅ (module v1 closed).  
-**Suite:** `forge test` → **65 PASS**.
+**Suite:** `forge test` → **70 PASS**.
 
 ## Docs
 

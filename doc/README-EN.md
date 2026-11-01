@@ -14,7 +14,7 @@ Design, security, gas, and circuit index for the Privacy Pool (Poseidon Merkle c
 | [../circuits/README.md](../circuits/README.md) | `Withdraw(4)` circuit + public signals | ✅ |
 
 **Module status:** Phases **0–7** ✅ (v1 closed).  
-**Verified suite:** `forge test` → **65 PASS**.  
+**Verified suite:** `forge test` → **70 PASS**.  
 **Docs sync:** 2026-09-13 (aligned to `src/` / `circuits/` after Phase 7).
 
 Module README: [`../README-EN.md`](../README-EN.md).
